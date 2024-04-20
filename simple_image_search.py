@@ -1,4 +1,6 @@
 import sys
+import os
+import pathlib
 import tensorflow as tf
 import glob
 import matplotlib.pyplot as plt
@@ -101,11 +103,11 @@ def predict(x):
     return np.array(p)
 
 def command_create_vectors(parsed_command):
-    image_paths=glob.glob(meta.search_index+"/*")
+    image_paths=glob.glob(os.path.join(meta.search_index,"*"))
     
     arrays=[]
     for path in image_paths:
-        array=cv2.resize(cv2.imread(path),(32,32))
+        array=cv2.resize(plt.imread(path),(32,32))
         arrays.append(array)
     image_batch=((np.array(arrays)/255.)-0.5)*2.
     
@@ -118,7 +120,7 @@ def command_create_vectors(parsed_command):
 def command_find_nearest(parsed_command):
     print("Searching...")
     
-    vector=predict((((cv2.resize(cv2.imread(parsed_command[1]),(32,32))[np.newaxis,...]/255.)-0.5)*2.)).squeeze()
+    vector=predict((((cv2.resize(plt.imread(parsed_command[1]),(32,32))[np.newaxis,...]/255.)-0.5)*2.)).squeeze()
     
     scores=[]
     for v in tqdm.tqdm([vector_container.vector_list[i] for i in vector_container.vector_list]):
