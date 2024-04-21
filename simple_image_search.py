@@ -96,7 +96,7 @@ def command_prepare_model(parsed_command):
 def predict(x):
     p=[]
     for x_i in x:
-        interpreter.tf_interpreter.set_tensor(interpreter.input_details[0]["index"],x_i[np.newaxis,...].astype(np.float32))
+        interpreter.tf_interpreter.set_tensor(interpreter.input_details[0]["index"],x_i[:,:,:3][np.newaxis,...].astype(np.float32))
         interpreter.tf_interpreter.invoke()    
         p.append(interpreter.tf_interpreter.get_tensor(interpreter.output_details[0]["index"]))
     return np.array(p)
@@ -131,7 +131,21 @@ def command_find_nearest(parsed_command):
     print("Path: ",list(vector_container.vector_list.keys())[index])
     print(".")
 
-def command_exit(parsed_command):exit()
+def command_calculate_all_distances(parsed_command):
+    print("Calculating...")
+    
+    vector=predict((((cv2.resize(plt.imread(parsed_command[1]),(32,32))[np.newaxis,...]/255.)-0.5)*2.)).squeeze()
+    
+    scores=[]
+    for v in tqdm.tqdm([vector_container.vector_list[i] for i in vector_container.vector_list]):
+        scores.append(((v-vector)**2).sum())
+    
+    for k,s in zip(vector_container.vector_list.keys(),scores):
+        print(f"Distance: {s}, Path: {k}")
+    
+    print(".")
+
+def command_exit(parsed_command):sys.exit(1)
 
 #Command Index
 command_dict={
@@ -143,12 +157,21 @@ command_dict={
     "prepare_model": command_prepare_model,
     "create_vectors": command_create_vectors,
     "find_nearest": command_find_nearest,
+    "calculate_all_distances":command_calculate_all_distances,
     "exit":command_exit
 }
 
 #Engine
 while True:
-    command=input("command: ")
-    parsed_command=command.split(" ")
-    
-    command_dict[parsed_command[0]](parsed_command)
+    try: 
+        command=input("command: ")
+        parsed_command=command.split(" ")
+        
+        command_dict[parsed_command[0]](parsed_command)
+    except KeyboardInterrupt:
+        command_exit(None)
+    except SystemExit:
+        command_exit(None)
+    except Exception as e:
+        print("Engine Error: ", e)
+        
